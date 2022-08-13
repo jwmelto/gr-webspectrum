@@ -428,3 +428,20 @@ function Spectrum(id, options) {
     this.updateSpectrumRatio();
     this.resize();
 }
+
+function displayHelp() {
+    let helpString = ""
+	+ " Hotkeys: \n"
+	+ " spacebar = pauses display \n"
+	+ " 'f' key  = fullscreen mode \n"
+	+ " 'c' key  = cycle spectrum color \n"
+	+ " 'ArrowUp/Down' = pan Y axis \n"
+	+ " 'ArrowLeft/Right' = scale Y axis \n"
+	+ " 's' key  = increase spectrum display size \n"
+	+ " 'w' key  = increase waterfall display size \n"
+	+ " '+' key  = increment averaging \n"
+	+ " '-' key  = decrement averaging \n"
+	+ " 'm' key  = toggle max hold \n";
+
+    alert(helpString);
+}

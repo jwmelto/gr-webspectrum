@@ -1,0 +1,9 @@
+# .env files should not be controlled
+.env
+
+# python cruft
+__pycache__
+.pytest_cache
+
+# Poetry lock should not be controlled
+poetry.lock

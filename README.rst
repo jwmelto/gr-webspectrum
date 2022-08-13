@@ -1,58 +1,99 @@
-A Web-based spectrum display server for GNURadio
+A Web-based spectrum display server
 
-The web application code is the original 'waterfall' program by jledet. The receiver portion has been 
-reworked to accept a stream of vectors from GNURadio
+This is an adapation of https://github.com/jledet/waterfall, inspired
+by work from https://github.com/muaddib1984/gr-webspectrum. The web
+portion has been re-implemented in FastAPI using Server Side Events
+(SSE), which is a simpler implementation than websockets.
 
-Original Waterfall Project:
-(https://github.com/jledet/waterfall)
+## What This Is
 
-ORIGINAL README Notes
-********************************
-HTML Canvas/WebSockets Waterfall
-********************************
+This project is a proof-of-concept architectural demonstration. It
+implements a robust, production-quality ASGI web back-end to serve
+dynamic content to a browser.
 
-This is a small experiment to create a waterfall plot with HTML Canvas and WebSockets to stream live FFT data from an SDR:
+It provides a complete framework for hosting a web
+application. Consequently, it may appear more complex than you might
+expect, at first. However, when you start extending it, I think the
+design decisions that have been made will show their value.
 
-.. image:: img/waterfall.png
+It implements a proof-of-concept spectral display with many
+features. It supports update rates in excess of most monitors' refresh
+rate.
 
-``spectrum.js`` contains the main JavaScript source code for the plot, while ``colormap.js`` contains colormaps generated using ``make_colormap.py``.
+## What This Is Not
 
-``index.html``, ``style.css``, ``script.js`` contain an example page that receives FFT data on a WebSocket and plots it on the waterfall plot.
+This project is not a production-quality web application. There is
+just enough web programming to prove the concepts. The spectrum and
+waterfall displays are mostly untouched from the original project.
 
-``server.py`` contains a example `Bottle <https://bottlepy.org/docs/dev/>`_ and `gevent-websocket <https://pypi.org/project/gevent-websocket/>`_ server that broadcasts FFT data to connected clients. The FFT data is generated using `GNU radio <https://www.gnuradio.org/>`_ using a USRP but it should be fairly easy to change it to a different SDR.
+It does not provide any user authentication, so exposure outside your
+local machine/network should not be done. You have been
+warned. However, adding authentication to a FastAPI application is
+very straightforward, so you can get there from here without difficulty.
 
+This project is not everything you would ever want from a web-based
+spectral display. Some features are necessarily application-specific
+and I haven't imagined your application. Useful features like changing
+the radio parameters are left as an exercise for the reader.
 
-DESCRIPTION
-The included flowgraph 'examples/RTLSDR_or_fake_signal_to_fft_to_zmq.grc' allows the user to 
-run simulated spectrum into the server for testing, or enable the RTLSDR block to stream an RTLSDR
-IQ stream into the server. To use with another SDR, simply replace the RTLSDR Source with your SDR's
-block in GNURadio.
+# Architecture
 
-USAGE
+This project is designed with strong separation of concerns. The web
+application is only concerned with feeding data to the browser to
+drive the visualization.
 
-run the zmq_server.py with the appropriate arguments. 
-output of zmq_server.py -h
-usage: zmq_server.py [-h] [-s SAMPLE_RATE] [-f FREQUENCY] [-n FFT_SIZE] [-r FRAME_RATE]
+The interface to the frequency source (radio or simulation) is
+isolated to a microservice. This facilitates swapping out data sources
+without large-scale changes to the infrastructure.
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -s SAMPLE_RATE, --sample-rate SAMPLE_RATE
-  -f FREQUENCY, --frequency FREQUENCY
-  -n FFT_SIZE, --fft-size FFT_SIZE
-  -r FRAME_RATE, --frame-rate FRAME_RATE
-the server is hardcoded to receive data on zmq port 5001 and display spectrum on 0.0.0.0 port 8200
+Redis was chosen as the communications channel between the components
+because it is trivial to set up, and very fast.
 
-Open the RTLSDR_or_fake_signal_to_fft_to_zmq.grc' in GNURadio Companion and run the flowgraph
--- or --
-Disable the fake signals and enable the RTLSDR block, then run the flowgraph
-(if you use the RTLSDR, make sure to disable the boxed out portion of signal sources and throttle)
+# INSTALLATION
 
-Point your webbrowser to 0.0.0.0:8200
+Because the Python dependencies are extensive, this project was
+implemented using Poetry. I chose Poetry because its interface is a
+bit nicer than virtual environments (spawning a shell is more
+intuitive than remembering to activate/deactivate a venv).
+
+Install Poetry with `pip install poetry`.
+Install the dependencies: `poetry install`
+Start a Poetry shell with `poetry shell`.
+
+# USAGE
+
+There are three components that need to run
+
+ 1. Redis. The easiest way to do this is running a Docker
+    container. The default configuration points to a locally running
+    Redis database:
+    `docker run --rm -dt --name redis -p 6379:6379 redis`
+
+ 2. The **uvicorn** ASGI server.
+    `cd server; uvicorn --host 0.0.0.0 --port 8000 app.main:app`
+    This runs in the foreground, and exposes port 8000 (the default)
+    on all network interfaces. If you omit the `--host` argument, it
+    will default to "localhost". Or, you can specify any IP address
+    your computer supports where you want the web server to listen.
+
+    For debugging, the `--reload` flag is very helpful; it causes the
+    server to detect modified python files and restart. For
+    production, it is a security hole.
+
+  3. The microservice. This is left as an exercise for the reader, so
+     the syntax is up to you. A reference (simulator)
+     implementation is provided as
+     `microservices/simple_sim.py`
+
+     Another (untested) adapter for GNU Radio is provided as
+     `microservices/gr_zmq_adapter.py`
+
+Point your webbrowser to http://127.0.0.1:8000/spectral
 you will see the spectrum display
 
 
 CREDITS
-All credit for the web design goes to jladet, thanks for making a simple but elegant web interface
+All credit for the graphics goes to jledet, thanks for making a simple but elegant web interface
 for displaying spectrum.
 
 
