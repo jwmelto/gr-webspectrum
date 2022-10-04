@@ -61,7 +61,7 @@ class top_block(gr.top_block):
 
         # Create the sub_source block
         self.zmq_sub_source = zeromq.sub_source(
-            args.item_size,
+            args.data_size,
             args.fft_size,
             args.endpoint,
             kw.get('zmq_timeout_ms', 100),
@@ -70,7 +70,7 @@ class top_block(gr.top_block):
             kw.get('zmq_sub_filter', ''),
             )
 
-        self.fft_broadcast = fft_broadcast_sink(fft_size,
+        self.fft_broadcast = fft_broadcast_sink(args.fft_size,
                                                     redis_host=args.redis_host,
                                                     redis_port=args.redis_port,
                                                     redis_stream=args.redis_stream)
